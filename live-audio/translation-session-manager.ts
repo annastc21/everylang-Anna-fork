@@ -26,6 +26,7 @@ import {
   writeSourceLanguage,
 } from "../src/liveAudioConfig.ts";
 import type { ServerDoc } from "../serverDoc.ts";
+import { LocalTranscriber } from "./local-transcriber.ts";
 import { TranscriptSegmentLog } from "./transcript-log.ts";
 import { SILENCE_GATING_OFF_DBFS, TranslationBridge } from "./translation-bridge.ts";
 import type { BridgeHealth, BridgeStatus } from "./translation-bridge.ts";
@@ -527,13 +528,26 @@ export class TranslationSessionManager {
           telemetry.capture({ distinctId: sessionId, event, properties: { ...properties, sessionId } })
       : null;
 
+    const writesSourceTranscript = targetLanguage === this.primaryTargetFor(sessionId);
+    const localSttUrl = process.env.LOCAL_STT_URL;
+    const localTranscriber =
+      writesSourceTranscript && localSttUrl
+        ? new LocalTranscriber({
+            baseUrl: localSttUrl,
+            model: process.env.LOCAL_STT_MODEL ?? "whisper-1",
+            onText: (text) => transcript?.append(this.getSourceLanguage(sessionId), text),
+            onError: (error) => console.warn("[LocalTranscriber]", error),
+          })
+        : null;
+
     const config = {
       geminiApiKey: process.env.GEMINI_API_KEY!,
       livekitUrl: this.livekitConfig?.url ?? process.env.LIVEKIT_URL ?? process.env.NEXT_PUBLIC_LIVEKIT_URL ?? "ws://localhost:7880",
       livekitApiKey: this.livekitConfig?.apiKey ?? process.env.LIVEKIT_API_KEY!,
       livekitApiSecret: this.livekitConfig?.apiSecret ?? process.env.LIVEKIT_API_SECRET!,
       transcript,
-      writesSourceTranscript: targetLanguage === this.primaryTargetFor(sessionId),
+      writesSourceTranscript,
+      localTranscriber,
       sourceLanguage: this.getSourceLanguage(sessionId),
       recordEvent,
       silenceThresholdDbfs: this.silenceThresholdDbfs,
