@@ -52,17 +52,9 @@ import {
 import type { RemoteTrack } from "@livekit/rtc-node";
 import WebSocket from "ws";
 import { DEFAULT_SOURCE_LANGUAGE } from "../src/liveAudioConfig.ts";
-import { LocalTranscriber } from "./local-transcriber.ts";
 import type { TranscriptSegmentLog } from "./transcript-log.ts";
 
 export type BridgeStatus = "starting" | "active" | "error" | "closed";
-
-export function shouldGeminiTranscribeSource(
-  writesSourceTranscript: boolean,
-  hasLocalTranscriber: boolean
-): boolean {
-  return writesSourceTranscript && !hasLocalTranscriber;
-}
 
 /** The Gemini leg's state, derived for reporting (see health()). */
 export type GeminiLegState = "ready" | "connecting" | "backoff" | "suspended" | "down";
@@ -457,7 +449,6 @@ export class TranslationBridge {
   // input transcription. Only the primary bridge does, so the same source text isn't
   // appended once per running language.
   private readonly writesSourceTranscript: boolean;
-  private readonly localTranscriber: LocalTranscriber | null;
   // The language the speaker is speaking (BCP-47), which is the code that transcript
   // is filed under. Gemini detects the spoken language itself — nothing in the setup
   // message names it — so this is purely how we *label* what comes back. Getting it
@@ -482,7 +473,6 @@ export class TranslationBridge {
       livekitApiSecret: string;
       transcript?: TranscriptSegmentLog | null;
       writesSourceTranscript?: boolean;
-      localTranscriber?: LocalTranscriber | null;
       sourceLanguage?: string;
       recordEvent?: RecordEvent | null;
       silenceThresholdDbfs?: number;
@@ -498,7 +488,6 @@ export class TranslationBridge {
     this.livekitApiSecret = config.livekitApiSecret;
     this.transcript = config.transcript ?? null;
     this.writesSourceTranscript = config.writesSourceTranscript ?? false;
-    this.localTranscriber = config.localTranscriber ?? null;
     this.sourceLanguage = config.sourceLanguage ?? DEFAULT_SOURCE_LANGUAGE;
     this.recordEvent = config.recordEvent ?? null;
     this.silenceThresholdDbfs = config.silenceThresholdDbfs ?? SILENCE_GATING_OFF_DBFS;
@@ -615,7 +604,6 @@ export class TranslationBridge {
     this.closePipes("stop");
 
     this.teardownGeminiSide();
-    await this.localTranscriber?.flush();
 
     if (this.room) {
       await this.room.disconnect();
@@ -635,7 +623,6 @@ export class TranslationBridge {
    * suspended) and won't reconnect.
    */
   private teardownGeminiSide(): void {
-    void this.localTranscriber?.flush();
     this.epoch++;
     this.reconnecting = false;
     if (this.reconnectTimer) {
@@ -1113,10 +1100,7 @@ export class TranslationBridge {
         // transcript is produced once regardless of how many languages run. There is no
         // source-language field to set here: Gemini Live Translate detects the input
         // language itself, which is what makes a non-English speaker work at all.
-        ...(shouldGeminiTranscribeSource(
-          this.writesSourceTranscript,
-          this.localTranscriber !== null
-        ) ? { inputAudioTranscription: {} } : {}),
+        ...(this.writesSourceTranscript ? { inputAudioTranscription: {} } : {}),
         generationConfig: {
           responseModalities: ["AUDIO"],
           translationConfig: {
@@ -1553,7 +1537,6 @@ export class TranslationBridge {
     // raw level is passed on so the gap-collapse can tell a faint consonant (kept)
     // from genuine dead air (droppable).
     const dbfs = frameRmsDbfs(frame.data);
-    if (this.writesSourceTranscript) this.localTranscriber?.push(frame.data, dbfs);
     const isVoice = dbfs >= this.silenceThresholdDbfs;
     if (isVoice) {
       this.lastVoiceAt = Date.now();

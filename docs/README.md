@@ -22,7 +22,6 @@ Short, surfaced-not-comprehensive documentation. Coding agents can grep; humans 
   observe→enforce rollout, how each device is given one, and how to rotate.
 - [OBSERVABILITY.md](OBSERVABILITY.md) — what to observe about the live-audio backend
   (status/liveness) and where to pull it from: PostHog events, in-process state, LiveKit, Yjs.
-- [LOCAL_STT.md](LOCAL_STT.md) — optional local source-language transcription for live audio.
 - [live-audio-resilience.md](live-audio-resilience.md) — how the translation bridge survives
   LiveKit and Gemini dropping connections under it. Incident history (two "active but deaf"
   outages and one "fed twice"), the invariant, and the defense layers. **Read before changing the bridge's

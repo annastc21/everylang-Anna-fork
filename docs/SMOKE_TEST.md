@@ -80,9 +80,6 @@ an incident happens that this list would not have caught, add a line.
 - [ ] On the viewer device, tap a language card on the landing page (that is the attendee's
       way in), **after** broadcast started:
       transcript deltas appear, translated audio plays after tapping play.
-- [ ] With `LOCAL_STT_URL` set and the local server running (see [LOCAL_STT.md](LOCAL_STT.md)),
-      speak and confirm the source transcript appears from local text while translated audio
-      still plays. Unset `LOCAL_STT_URL` and confirm the Gemini source transcript returns.
 - [ ] **The #69 race / waiting room**: start the Listen client *first*, then start
       broadcasting. Before the broadcast the supervisor runs no bridges (the listener just
       waits); within ~10 s of the organizer joining, the translator appears and the

@@ -53,9 +53,6 @@ reads them, which is where they stay correct.
   the cost path (unset = no suspending at all; mind the sign, dBFS is negative, so `0` gates
   hardest). See [src/liveAudioConfig.ts](src/liveAudioConfig.ts) and
   [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md).
-- *Local source transcription* (`LOCAL_STT_URL`, `LOCAL_STT_MODEL`) — optionally send
-  organizer audio to an OpenAI-compatible local speech-to-text server instead of asking
-  Gemini for the source transcript. See [docs/LOCAL_STT.md](docs/LOCAL_STT.md).
 - *The current session* (`SESSION_TIMEZONE`, `SESSION_REGISTRY_PATH`) — the congregation's IANA
   zone, which the server reckons session dates and the pin expiry on. A container's zone is
   UTC, which files a Sunday-evening service under Monday (issue #111). See

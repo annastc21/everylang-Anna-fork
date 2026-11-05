@@ -10,20 +10,10 @@ import {
   SILENCE_GATING_OFF_DBFS,
   SILENCE_THRESHOLD_DBFS,
   reconcileOrganizerAudio,
-  shouldGeminiTranscribeSource,
   shouldRecoverStalledInput,
   type AudioParticipantLike,
   type AudioPublicationLike,
 } from "./translation-bridge.ts";
-
-describe("shouldGeminiTranscribeSource", () => {
-  it("only requests Gemini source transcription for the primary bridge without local STT", () => {
-    expect(shouldGeminiTranscribeSource(false, false)).toBe(false);
-    expect(shouldGeminiTranscribeSource(false, true)).toBe(false);
-    expect(shouldGeminiTranscribeSource(true, false)).toBe(true);
-    expect(shouldGeminiTranscribeSource(true, true)).toBe(false);
-  });
-});
 
 // Build a PCM16 frame of a constant-amplitude tone (square wave), so its RMS equals
 // the amplitude and the expected dBFS is 20*log10(amp/32768) exactly.
